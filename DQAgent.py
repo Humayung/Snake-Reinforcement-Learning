@@ -71,10 +71,10 @@ def main():
     gamma = 0.999
     eps_start = 1
     eps_end = 0.003
-    eps_decay = 0.00005
+    eps_decay = 0.001
     target_update = 100
-    memory_size = 60000
-    lr = 0.0004
+    memory_size = 15000
+    lr = 0.001
     num_episodes = 100000
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -83,7 +83,6 @@ def main():
     strategy = EpsilonGreedyStrategy(eps_start, eps_end, eps_decay)
     agent = Agent(strategy, em.num_actions_available(), device)
     memory = ReplayMemory(memory_size)
-    
     policy_net = DQN(em.get_screen_height(), em.get_screen_width()).to(device)
     target_net = DQN(em.get_screen_height(), em.get_screen_width()).to(device)
     target_net.load_state_dict(policy_net.state_dict())
@@ -92,7 +91,7 @@ def main():
     
     episode_durations = []
     
-    for episode in range(num_episodes):
+    for episode in count():
         em.reset()
         state = em.get_state()
         episode_rewards = 0
@@ -118,14 +117,15 @@ def main():
                 next_q_values = QValues.get_next(target_net, next_states)
                 target_q_values = (next_q_values * gamma) + rewards
                 
-                loss = F.smooth_l1_loss(current_q_values, target_q_values.unsqueeze(1))
+                loss = F.mse_loss(current_q_values, target_q_values.unsqueeze(1))
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
                 
-            if em.done or timestep > 5000:
+                
+            if em.done:
                 episode_durations.append(episode_rewards)
-                plot(episode_durations, 100)
+                # plot(episode_durations, 100)
                 break
                 
             print(agent.strategy.epsilon)

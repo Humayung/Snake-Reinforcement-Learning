@@ -16,5 +16,8 @@ class Agent():
             return torch.tensor([action]).to(self.device)
         else:
             with torch.no_grad():
-                return policy_net(state).argmax(dim=1)
+                out = policy_net(state)
+                print(out)
+                out = out.argmax(dim=1)
+                return out
 

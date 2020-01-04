@@ -7,7 +7,7 @@ from Snake_env import Snake
 class SnakeEnvManager():
     def __init__(self, device):
         self.device = device
-        self.env = Snake(30, 30)
+        self.env = Snake(10, 10)
         self.env.reset()
         self.current_screen = None
         self.done = False
@@ -45,16 +45,16 @@ class SnakeEnvManager():
             
     def get_screen_height(self):
         screen = self.get_processed_screen()
-        return screen.shape[2]
+        return screen.shape[1]
         
     def get_screen_width(self):
         screen = self.get_processed_screen()
-        return screen.shape[3]
+        return screen.shape[2]
         
     def get_processed_screen(self):
         # screen = self.render('rgb_array').transpose((2, 0, 1))
         self.render('rgb_array')
-        screen = self.env.get_view(0.65).transpose((2, 0, 1))
+        screen = self.env.get_view(1)
         return self.transform_screen_data(screen)
         
     def crop_screen(self, screen):
@@ -66,12 +66,7 @@ class SnakeEnvManager():
         return screen
         
     def transform_screen_data(self, screen):
-        screen = np.ascontiguousarray(screen, dtype=np.float32) / 255
+        screen = np.ascontiguousarray(screen, dtype=np.float32)
         screen = torch.from_numpy(screen)
         
-        resize = T.Compose([
-            T.ToPILImage(),
-            T.ToTensor()
-        ])
-        
-        return resize(screen).unsqueeze(0).to(self.device)
+        return screen.unsqueeze(0).to(self.device)

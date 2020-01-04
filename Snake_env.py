@@ -22,17 +22,19 @@ class Snake:
         self.HEAD_COLOR = screen.color('fill', 0, 0, 255)
         self.BLANK_COLOR = 0
         self.APPLE_COLOR = screen.color('fill', 255, 100, 0)
-        self.STATE_ID = {self.HEAD_COLOR: [0, 0, 255], self.BODY_COLOR : [255, 255, 255], self.BORDER_COLOR : [255, 255, 255], self.BLANK_COLOR : [0, 0, 0], self.APPLE_COLOR : [255, 127, 0]}        
-
+        # self.STATE_ID = {self.HEAD_COLOR: [0, 0, 255], self.BODY_COLOR : [255, 255, 255], self.BORDER_COLOR : [255, 255, 255], self.BLANK_COLOR : [0, 0, 0], self.APPLE_COLOR : [255, 127, 0]}        
+        self.STATE_ID = {self.HEAD_COLOR: 1, self.BODY_COLOR : 1, self.BORDER_COLOR : 1, self.BLANK_COLOR : 0, self.APPLE_COLOR : 0.5}        
         self.borderShape = {'x' : 0, 'y' : 0, 'w' : self.screen.WIDTH, 'h' : self.screen.HEIGHT}
         self.textPos = [self.borderShape.get('x') + self.borderShape.get('w') - 2, self.borderShape.get('x') + self.borderShape.get('w')]
         self.screen.fillText(255, 255, 0)
         self.reset()
 
     def reset(self):
+        self.steps_without_scoring = 0
         self.createGame(3)
         self.score = 0
         self.spawnApple(self.borderShape)
+        self.updateMatrix()
     
     def createGame(self, length):
         self.matrix = [0 for i in range(self.borderShape.get('w') * self.borderShape.get('h'))]
@@ -49,7 +51,7 @@ class Snake:
         head_x = head_i % self.screen.WIDTH;
         head_y = head_i // self.screen.WIDTH;
 
-        state = np.zeros([self.stateSize, self.stateSize, 3])
+        state = np.zeros([self.stateSize, self.stateSize])
         
         rX = self.borderShape.get('x')
         rY = self.borderShape.get('y')
@@ -69,7 +71,7 @@ class Snake:
         return state
         
     def get_screen(self):
-        state = np.zeros([self.screen.WIDTH, self.screen.HEIGHT, 3])
+        state = np.zeros([self.screen.WIDTH, self.screen.HEIGHT])
         for i in range(state.shape[0]):
             for j in range(state.shape[1]):
                 index = i + j * self.screen.WIDTH
@@ -127,7 +129,7 @@ class Snake:
         try:
             new_loc = randint(0, len(self.matrix) - 1)
             while self.matrix[new_loc] is not 0 :
-                new_loc = randint(0, len(self.matrix))
+                new_loc = randint(0, len(self.matrix) - 1)
         except:
             print(new_loc)
         self.apple = new_loc
@@ -141,8 +143,8 @@ class Snake:
     def grow(self):
         self.score += 1
         self.body.append(0)
-        
-    def step(self, dir):
+    
+    def make_action(self, dir):
         # Make sure the snake does not collapse into its body
         self.currentDir = self.evaluateDir(dir)
         
@@ -162,18 +164,32 @@ class Snake:
 
         # Remove Tail
         self.matrix[blockTail] = self.BLANK_COLOR   
-     
-        reward = 0
+        
         done = False
         if self.aBorder(body[0]):
             done = True
-            reward = -1
-
+        
         if self.anApple(body[0]):
-            reward = 1
             self.grow()
             self.spawnApple(self.borderShape)
+            
         self.updateMatrix()
+        return done
+        
+    def step(self, dir):
+        score_before = self.score
+        done = self.make_action(dir)
+        score_after = self.score
+        reward = score_after - score_before
+        
+        if reward == 0:
+            self.steps_without_scoring += 1
+        else:
+            self.steps_without_scoring = 0
+        
+        if self.steps_without_scoring > 300:
+            done = True
+            
         
         return (None, reward, done, None)
     
