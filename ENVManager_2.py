@@ -7,7 +7,7 @@ from Snake_env import Snake
 class SnakeEnvManager():
     def __init__(self, device):
         self.device = device
-        self.env = Snake(10, 10)
+        self.env = Snake(50, 50)
         self.env.reset()
         self.current_screen = None
         self.done = False
@@ -54,7 +54,7 @@ class SnakeEnvManager():
     def get_processed_screen(self):
         # screen = self.render('rgb_array').transpose((2, 0, 1))
         self.render('rgb_array')
-        screen = self.env.get_view(1)
+        screen = self.env.get_view(2)
         return self.transform_screen_data(screen)
         
     def crop_screen(self, screen):

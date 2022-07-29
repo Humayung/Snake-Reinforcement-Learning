@@ -1,3 +1,5 @@
+import os
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 from matplotlib import pyplot as plt
 import random
 from collections import namedtuple
@@ -15,6 +17,7 @@ from ReplayMemory import ReplayMemory
 from Strategy import EpsilonGreedyStrategy
 from Agent import Agent
   
+
 Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'reward'))
                   
         
@@ -70,15 +73,26 @@ def main():
     batch_size = 200
     gamma = 0.999
     eps_start = 1
-    eps_end = 0.003
-    eps_decay = 0.001
+    eps_end = 0.0003
+    eps_decay = 0.0001
     target_update = 100
     memory_size = 15000
     lr = 0.001
     num_episodes = 100000
-    
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # check mps or cuda available and assign device
+    if torch.cuda.is_available():
+        print("Using CUDA")
+        device = torch.device("cuda")
+    # elif torch.backends.mps.is_available():
+    #     print("Using MPS")
+    #     device = torch.device("mps")
+    else:
+        print("Using CPU")
+        device = torch.device("cpu")
+
     em = SnakeEnvManager(device)
+    input("Enter to continue...")
     # em = CartPoleEnvManager(device)
     strategy = EpsilonGreedyStrategy(eps_start, eps_end, eps_decay)
     agent = Agent(strategy, em.num_actions_available(), device)
@@ -90,12 +104,14 @@ def main():
     optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
     
     episode_durations = []
-    
+
     for episode in count():
         em.reset()
         state = em.get_state()
         episode_rewards = 0
         for timestep in count():
+            print(agent.strategy.epsilon)
+            print("Epsiode: {}".format(episode))
             action = agent.select_action(state, policy_net)
             reward = em.take_action(action)
             next_state = em.get_state()
@@ -128,11 +144,10 @@ def main():
                 # plot(episode_durations, 100)
                 break
                 
-            print(agent.strategy.epsilon)
-                
+            
+            em.env.screen.clear()
         if episode % target_update == 0:
             target_net.load_state_dict(policy_net.state_dict())
-            
 if __name__ == '__main__':
     main()
         

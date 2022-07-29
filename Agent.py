@@ -17,7 +17,6 @@ class Agent():
         else:
             with torch.no_grad():
                 out = policy_net(state)
-                print(out)
                 out = out.argmax(dim=1)
                 return out
 

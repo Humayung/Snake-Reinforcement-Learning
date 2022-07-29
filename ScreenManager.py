@@ -1,7 +1,6 @@
 from os import system, name 
 from time import sleep 
 import numpy as np
-from sty import Style, RgbBg, fg, bg, ef, rs
 
 
 class Screen:
@@ -22,7 +21,7 @@ class Screen:
         print("\033[" + str(y) + ";" + str(x) + "H" + self.fillColor + "  \x1b[49m")
       
     def clear(self): 
-        system('clear')     
+        print('\033[2J')    
         
     def fill(self, *args):
         if len(args) == 1:
